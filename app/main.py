@@ -1,18 +1,25 @@
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from pathlib import Path
 from pydantic import BaseModel, Field
 import re
 
-app = FastAPI(title="AI Resume & Job Matcher", version="0.1.0")
+app = FastAPI(title="AI Resume & Job Matcher", version="0.2.0")
+FRONTEND = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
 
 SKILLS = {"python", "java", "sql", "react", "fastapi", "spring boot", "docker", "aws", "postgresql", "machine learning", "etl", "git", "javascript", "rest api", "pandas"}
 
 class MatchRequest(BaseModel):
-    resume_text: str = Field(min_length=1)
-    job_description: str = Field(min_length=1)
+    resume_text: str = Field(min_length=1, max_length=100000)
+    job_description: str = Field(min_length=1, max_length=100000)
 
 def extract_skills(text: str) -> set[str]:
     normalized = text.lower()
     return {skill for skill in SKILLS if re.search(r"(?<!\w)" + re.escape(skill) + r"(?!\w)", normalized)}
+
+@app.get("/", include_in_schema=False)
+def home():
+    return FileResponse(FRONTEND)
 
 @app.get("/health")
 def health():
